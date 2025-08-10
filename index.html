@@ -282,23 +282,23 @@
     <!-- হোম পেজ -->
     <div id="homePage" class="page">
         <div class="header">
-            <h1>আপনার ড্যাশবোর্ড</h1>
+            <h1>Welcome to Real Cash</h1>
         </div>
         
         <div class="container">
             <div class="user-info">
-                <p>নাম: <span id="userName">লোড হচ্ছে...</span></p>
-                <p>ইমেইল: <span id="userEmail">লোড হচ্ছে...</span></p>
-                <p>ফোন: <span id="userPhone">লোড হচ্ছে...</span></p>
+                <p>Your Name: <span id="userName">লোড হচ্ছে...</span></p>
+                <p>Email: <span id="userEmail">লোড হচ্ছে...</span></p>
+                <p>Phone: <span id="userPhone">লোড হচ্ছে...</span></p>
             </div>
             
             <div class="balance-card">
-                <p>আপনার ব্যালেন্স</p>
+                <p>Your balance:</p>
                 <p id="userBalance">৳ 0.00</p>
             </div>
             
             <div class="task-card">
-                <h3>আজকের টাস্ক</h3>
+                <h3>Today Task</h3></h3>
                 <p id="todayTask">আজকে আপনার জন্য কোন টাস্ক নেই</p>
                 <button onclick="showPage('tasksPage')" style="width: 100%; margin-top: 10px;">সমস্ত টাস্ক দেখুন</button>
             </div>
@@ -319,14 +319,14 @@
             <div class="task-item">
                 <h3 class="task-title">ইউটিউব ভিডিও লাইক করুন</h3>
                 <p>এই ভিডিওটি লাইক করুন এবং স্ক্রিনশট জমা দিন</p>
-                <p class="task-reward">পুরস্কার: ৳ 5.00</p>
+                <p class="task-reward">পুরস্কার: ৳ 1.00</p>
                 <button class="task-btn" onclick="startTask('task1')">শুরু করুন</button>
             </div>
             
             <div class="task-item">
                 <h3 class="task-title">ফেসবুক পেজে লাইক করুন</h3>
                 <p>আমাদের ফেসবুক পেজে লাইক করুন</p>
-                <p class="task-reward">পুরস্কার: ৳ 10.00</p>
+                <p class="task-reward">পুরস্কার: ৳ 1.00</p>
                 <button class="task-btn" onclick="startTask('task2')">শুরু করুন</button>
             </div>
         </div>
@@ -338,16 +338,16 @@
             <a href="#" class="back-btn" onclick="showPage('homePage')">
                 <i class="fas fa-arrow-left"></i>
             </a>
-            <h1>টাকা উত্তোলন</h1>
+            <h1>Withdraw</h1>
         </div>
         
         <div class="container">
             <div class="user-info">
-                <p>বর্তমান ব্যালেন্স: <span id="withdrawBalance">৳ 0.00</span></p>
+                <p>Current Balance: <span id="withdrawBalance">৳ 0.00</span></p>
             </div>
             
             <div class="task-card">
-                <h3>উত্তোলন করুন</h3>
+                <h3>Withdraw Now</h3>
                 <div class="form-group">
                     <label for="withdrawAmount">টাকার পরিমাণ</label>
                     <input type="number" id="withdrawAmount" placeholder="৳">
@@ -356,14 +356,14 @@
                 <div class="form-group">
                     <label for="withdrawMethod">পদ্ধতি</label>
                     <select id="withdrawMethod" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                        <option value="bkash">বিকাশ</option>
-                        <option value="nagad">নগদ</option>
-                        <option value="rocket">রকেট</option>
+                        <option value="bkash">Bkash</option>
+                        <option value="nagad">Nagad</option>
+                        <option value="rocket">unable</option>
                     </select>
                 </div>
                 
                 <div class="form-group">
-                    <label for="withdrawNumber">মোবাইল নাম্বার</label>
+                    <label for="withdrawNumber">Phone Number</label>
                     <input type="tel" id="withdrawNumber" placeholder="01XXXXXXXXX">
                 </div>
                 
@@ -378,7 +378,7 @@
             <a href="#" class="back-btn" onclick="showPage('homePage')">
                 <i class="fas fa-arrow-left"></i>
             </a>
-            <h1>ভিডিও এড দেখুন</h1>
+            <h1>Watch Video ads</h1>
         </div>
         
         <div class="container">
