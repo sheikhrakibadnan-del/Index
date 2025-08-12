@@ -1,618 +1,219 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Premium Ad Reward System</title>
-  <script src='//libtl.com/sdk.js' data-zone='9593694' data-sdk='show_9593694'></script>
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-  <style>
-    :root {
-        --primary: #00c853;
-        --primary-dark: #009624;
-        --secondary: #ff6d00;
-        --secondary-dark: #e65100;
-        --blue: #4285f4;
-        --blue-dark: #3367d6;
-        --dark: #121212;
-        --darker: #0a0a0a;
-        --light: #f5f5f5;
-        --gray: #2a2a2a;
-        --card-bg: #1f1f1f;
-        --gold: #ffd700;
-        --red: #ff5252;
-        --red-dark: #d32f2f;
+// Constants
+const POINTS_PER_AD = 0.50;
+const WITHDRAW_FEE_PERCENT = 5;
+const MIN_WITHDRAW = 10;
+
+// State variables
+let watchedAdsCount = 0;
+let earnedPoints = 0;
+let autoAdInterval;
+let currentUser = null;
+let userData = {};
+
+// DOM Elements
+const watchedAdsEl = document.getElementById('watched-ads');
+const earnedPointsEl = document.getElementById('earned-points');
+const currentBalanceEl = document.getElementById('current-balance');
+const userNameEl = document.getElementById('user-name');
+const userPhoneEl = document.getElementById('user-phone');
+const logoutBtnEl = document.getElementById('logout-btn');
+const withdrawBtnEl = document.getElementById('withdraw-btn');
+const registeredPhoneEl = document.getElementById('registered-phone');
+const withdrawAmountEl = document.getElementById('withdraw-amount');
+const confirmWithdrawEl = document.getElementById('confirm-withdraw');
+const adNotificationEl = document.getElementById('ad-notification');
+
+// Initialize the app
+function initApp() {
+    // Firebase Auth State Listener
+    auth.onAuthStateChanged(async user => {
+        if (user) {
+            currentUser = user;
+            await loadUserData(user.uid);
+            setupEventListeners();
+        } else {
+            window.location.href = "index.html";
+        }
+    });
+}
+
+// Load user data from Firestore
+async function loadUserData(userId) {
+    try {
+        const doc = await db.collection('users').doc(userId).get();
+        
+        if (doc.exists) {
+            userData = doc.data();
+            watchedAdsCount = userData.watchedAds || 0;
+            earnedPoints = userData.balance || 0;
+            
+            // Update UI
+            userNameEl.textContent = userData.name || "User";
+            userPhoneEl.textContent = userData.phone || "N/A";
+            registeredPhoneEl.textContent = userData.phone || "N/A";
+            updateUI();
+        }
+    } catch (error) {
+        console.error("Error loading user data:", error);
+        showNotification("Failed to load user data");
+    }
+}
+
+// Update UI elements
+function updateUI() {
+    watchedAdsEl.textContent = watchedAdsCount;
+    earnedPointsEl.textContent = earnedPoints.toFixed(2);
+    currentBalanceEl.textContent = earnedPoints.toFixed(2);
+}
+
+// Watch ad function
+async function watchAd() {
+    if (!currentUser) return;
+    
+    showNotification("Loading ad... Please wait");
+    
+    try {
+        // Show Monetag ad
+        if (typeof show_9593694 === 'function') {
+            await show_9593694();
+        } else {
+            // Fallback to simulated ad
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+        
+        // Update points
+        earnedPoints += POINTS_PER_AD;
+        
+        // Save to Firestore
+        await db.collection('users').doc(currentUser.uid).update({
+            balance: firebase.firestore.FieldValue.increment(POINTS_PER_AD),
+            watchedAds: firebase.firestore.FieldValue.increment(1)
+        });
+        
+        // Update local data
+        watchedAdsCount++;
+        userData.balance = earnedPoints;
+        
+        updateUI();
+        showNotification("Ad completed! +0.50 points added");
+    } catch (error) {
+        console.error("Ad error:", error);
+        showNotification("Failed to show ad. Please try again.");
+    }
+}
+
+// Withdraw function
+async function processWithdrawal() {
+    const amount = parseFloat(withdrawAmountEl.value);
+    
+    if (!amount || amount < MIN_WITHDRAW) {
+        showNotification(`Minimum withdrawal is ${MIN_WITHDRAW} points`);
+        return;
     }
     
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    if (amount > earnedPoints) {
+        showNotification("Insufficient balance");
+        return;
     }
     
-    body {
-        background: linear-gradient(135deg, var(--darker), #1a1a2e);
-        color: var(--light);
-        min-height: 100vh;
-        padding: 20px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        position: relative;
-        overflow-x: hidden;
+    // Calculate fee
+    const fee = Math.max(1, (amount * WITHDRAW_FEE_PERCENT / 100));
+    const netAmount = amount - fee;
+    
+    try {
+        // Create withdrawal record
+        await db.collection('withdrawals').add({
+            userId: currentUser.uid,
+            userName: userData.name,
+            userPhone: userData.phone,
+            amount: amount,
+            fee: fee,
+            netAmount: netAmount,
+            method: "bkash",
+            status: "pending",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        // Update user balance
+        await db.collection('users').doc(currentUser.uid).update({
+            balance: firebase.firestore.FieldValue.increment(-amount),
+            totalWithdrawn: firebase.firestore.FieldValue.increment(amount)
+        });
+        
+        // Update local data
+        earnedPoints -= amount;
+        userData.balance = earnedPoints;
+        updateUI();
+        
+        // Close modal and show success
+        document.getElementById('withdraw-modal').style.display = "none";
+        showNotification(`Withdrawal request submitted! Net amount: ${netAmount.toFixed(2)} points`);
+    } catch (error) {
+        console.error("Withdrawal error:", error);
+        showNotification("Withdrawal failed: " + error.message);
+    }
+}
+
+// Show notification
+function showNotification(message) {
+    if (!adNotificationEl) return;
+    
+    adNotificationEl.textContent = message;
+    adNotificationEl.style.display = 'block';
+    
+    setTimeout(() => {
+        adNotificationEl.style.display = 'none';
+    }, 3000);
+}
+
+// Setup event listeners
+function setupEventListeners() {
+    // Watch ad button
+    if (document.getElementById('watch-ad-btn')) {
+        document.getElementById('watch-ad-btn').addEventListener('click', watchAd);
     }
     
-    /* ... (পূর্বের সকল CSS স্টাইল রাখুন) ... */
-
-    /* নতুন স্টাইল যোগ করা হলো */
-    .auth-container {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 15px;
-        padding: 20px;
-        margin-bottom: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        display: none; /* প্রাথমিকভাবে লুকানো */
+    // Auto ads buttons
+    if (document.getElementById('auto-ad-btn')) {
+        document.getElementById('auto-ad-btn').addEventListener('click', () => {
+            autoAdInterval = setInterval(watchAd, 30000);
+            showNotification("Auto ads started. Ads will play every 30 seconds.");
+        });
     }
-
-    .withdraw-container {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 15px;
-        padding: 20px;
-        margin-top: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        display: none; /* শুধুমাত্র লগইন ইউজারদের দেখাবে */
-    }
-
-    .auth-form {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .auth-form input {
-        padding: 12px;
-        border-radius: 8px;
-        border: none;
-        background: rgba(255, 255, 255, 0.1);
-        color: white;
-    }
-
-    .auth-tabs {
-        display: flex;
-        margin-bottom: 15px;
-    }
-
-    .auth-tab {
-        flex: 1;
-        text-align: center;
-        padding: 10px;
-        cursor: pointer;
-        border-bottom: 2px solid transparent;
-    }
-
-    .auth-tab.active {
-        border-bottom: 2px solid var(--primary);
-        font-weight: bold;
-    }
-
-    .btn-red {
-        box-shadow: 0 8px 0 var(--red-dark), 0 15px 20px rgba(0, 0, 0, 0.3);
-    }
-
-    .btn-red::before {
-        background: linear-gradient(45deg, var(--red), #ff867f);
-    }
-
-    .logout-btn {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        background: rgba(255, 0, 0, 0.2);
-        padding: 5px 10px;
-        border-radius: 5px;
-        font-size: 12px;
-        cursor: pointer;
-        display: none;
-    }
-
-    .logout-btn:hover {
-        background: rgba(255, 0, 0, 0.3);
-    }
-
-    /* মডাল স্টাইল */
-    .modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.8);
-        z-index: 1000;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .modal-content {
-        background: var(--card-bg);
-        padding: 30px;
-        border-radius: 15px;
-        max-width: 400px;
-        width: 90%;
-        text-align: center;
-    }
-
-    .close-modal {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        cursor: pointer;
-        font-size: 20px;
-    }
-  </style>
-</head>
-<body>
-    <div class="ad-notification" id="ad-notification">Ad completed! +0.50 points added to your account</div>
     
-    <!-- Auth Modal -->
-    <div class="modal" id="auth-modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeModal('auth-modal')">&times;</span>
-            <div class="auth-tabs">
-                <div class="auth-tab active" onclick="switchTab('login')">Login</div>
-                <div class="auth-tab" onclick="switchTab('signup')">Sign Up</div>
-            </div>
-            
-            <div id="login-form" class="auth-form">
-                <input type="email" id="login-email" placeholder="Email" required>
-                <input type="password" id="login-password" placeholder="Password" required>
-                <button class="btn-3d" onclick="loginUser()">Login</button>
-            </div>
-            
-            <div id="signup-form" class="auth-form" style="display: none;">
-                <input type="text" id="signup-name" placeholder="Full Name" required>
-                <input type="email" id="signup-email" placeholder="Email" required>
-                <input type="password" id="signup-password" placeholder="Password (min 6 chars)" required>
-                <button class="btn-3d" onclick="signupUser()">Create Account</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Withdraw Modal -->
-    <div class="modal" id="withdraw-modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeModal('withdraw-modal')">&times;</span>
-            <h3>Withdraw Funds</h3>
-            <div class="auth-form">
-                <select id="withdraw-method" class="auth-form" style="margin-bottom: 15px; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: none;">
-                    <option value="bkash">Bkash</option>
-                    <option value="nagad">Nagad</option>
-                    <option value="rocket">Rocket</option>
-                </select>
-                <input type="text" id="withdraw-number" placeholder="Account Number" required>
-                <input type="number" id="withdraw-amount" placeholder="Amount (Minimum 10)" min="10" required>
-                <button class="btn-3d btn-red" onclick="processWithdrawal()">Withdraw</button>
-                <p style="margin-top: 10px; font-size: 12px;">Withdrawal fee: 5% (min 1 point)</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="container">
-        <div class="header">
-            <h1>Premium Ad Reward System</h1>
-            <div class="developer" onclick="window.location.href='https://t.me/RKDEVELOPER22'">Developer by Sheikh Rakib adnan</div>
-            <div class="logout-btn" id="logout-btn" onclick="logoutUser()">Logout</div>
-        </div>
-        
-        <div class="content">
-            <!-- Auth Container (শুধুমাত্র লগআউট অবস্থায় দেখাবে) -->
-            <div class="auth-container" id="auth-container">
-                <p style="text-align: center; margin-bottom: 15px;">Login or create account to withdraw your earnings</p>
-                <button class="btn-3d" style="width: 100%;" onclick="openModal('auth-modal')">Login / Sign Up</button>
-            </div>
-            
-            <div class="user-info">
-                <div class="user-badge">welcome</div>
-                <p>Welcome, <span id="user-name">Guest</span></p>
-                <p>User ID: <span id="user-id">#GUEST-0000</span></p>
-            </div>
-            
-            <div class="stats">
-                <div class="stat-card">
-                    <h3>Watched Ads</h3>
-                    <div class="value" id="watched-ads">0</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Earned Points</h3>
-                    <div class="value" id="earned-points">0.00</div>
-                </div>
-            </div>
-            
-            <div class="progress-container">
-                <div class="progress-label">
-                    <span>Progress to Bonus</span>
-                    <span id="ads-progress">0%</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progress-fill"></div>
-                </div>
-            </div>
-            
-            <div class="ad-container">
-                <div class="ad-label">MONETAG INTERSTITIAL AD</div>
-                <div class="buttons">
-                    <button class="btn-3d" id="watch-ad-btn" onclick="watchAd()">Watch Ad (+0.50)</button>
-                    <button class="btn-3d btn-secondary" id="auto-ad-btn" onclick="startAutoAds()">Auto Show Ads</button>
-                    <button class="btn-3d" id="stop-auto-btn" onclick="stopAutoAds()">Stop Auto Ads</button>
-                </div>
-            </div>
-            
-            <!-- Withdraw Container (শুধুমাত্র লগইন অবস্থায় দেখাবে) -->
-            <div class="withdraw-container" id="withdraw-container">
-                <h3 style="text-align: center; margin-bottom: 15px;">Withdraw Your Earnings</h3>
-                <button class="btn-3d btn-red" style="width: 100%;" onclick="openModal('withdraw-modal')">Withdraw Points</button>
-                <p style="text-align: center; margin-top: 10px; font-size: 12px;">Current balance: <span id="current-balance">0.00</span> points</p>
-            </div>
-            
-            <div class="website-section">
-                <h3>Visit Our Website</h3>
-                <p>Check out our latest content and tools</p>
-                <button class="btn-3d btn-blue" onclick="window.open('https://imagetokbconvat.blogspot.com', '_blank')">Visit Website</button>
-            </div>
-        </div>
-        
-        <div class="footer">
-            <p>Secured by Firebase • All transactions are protected</p>
-            <div class="firebase-logo">Firebase</div>
-        </div>
-    </div>
-
-    <script>
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyA6dXx6dofu6KlQWMl0VwsVxB0hNNtTGDw",
-  authDomain: "real-cbaa6.firebaseapp.com",
-  databaseURL: "https://real-cbaa6-default-rtdb.firebaseio.com",
-  projectId: "real-cbaa6",
-  storageBucket: "real-cbaa6.firebasestorage.app",
-  messagingSenderId: "723340125605",
-  appId: "1:723340125605:web:e46b3a1f15499a1fe2b44c",
-  measurementId: "G-6FWJC1QX78"
-};
-
-        // Firebase Initialize
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-        // Constants
-        const POINTS_PER_AD = 0.50;
-        const ADS_FOR_BONUS = 10;
-        const WITHDRAW_FEE_PERCENT = 5;
-        const MIN_WITHDRAW = 10;
-        
-        // State variables
-        let watchedAdsCount = 0;
-        let earnedPoints = 0;
-        let autoAdInterval;
-        let currentUser = null;
-        let userData = {};
-        
-        // DOM Elements
-        const watchedAdsEl = document.getElementById('watched-ads');
-        const earnedPointsEl = document.getElementById('earned-points');
-        const adsProgressEl = document.getElementById('ads-progress');
-        const progressFillEl = document.getElementById('progress-fill');
-        const adNotificationEl = document.getElementById('ad-notification');
-        const authContainerEl = document.getElementById('auth-container');
-        const withdrawContainerEl = document.getElementById('withdraw-container');
-        const logoutBtnEl = document.getElementById('logout-btn');
-        const currentBalanceEl = document.getElementById('current-balance');
-        const userNameEl = document.getElementById('user-name');
-        const userIdEl = document.getElementById('user-id');
-
-        // Initialize the app
-        function initApp() {
-            // Firebase Auth State Listener
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    // User is signed in
-                    currentUser = user;
-                    loadUserData(user.uid);
-                    
-                    // Update UI for logged in user
-                    authContainerEl.style.display = 'none';
-                    withdrawContainerEl.style.display = 'block';
-                    logoutBtnEl.style.display = 'block';
-                    userNameEl.textContent = user.displayName || user.email.split('@')[0];
-                    userIdEl.textContent = `#${user.uid.substring(0, 8).toUpperCase()}`;
-                } else {
-                    // User is signed out
-                    currentUser = null;
-                    
-                    // Update UI for guest
-                    authContainerEl.style.display = 'block';
-                    withdrawContainerEl.style.display = 'none';
-                    logoutBtnEl.style.display = 'none';
-                    userNameEl.textContent = 'Guest';
-                    userIdEl.textContent = '#GUEST-0000';
-                    
-                    // Load guest data from localStorage
-                    if (localStorage.getItem('watchedAdsCount')) {
-                        watchedAdsCount = parseInt(localStorage.getItem('watchedAdsCount'));
-                        earnedPoints = parseFloat(localStorage.getItem('earnedPoints'));
-                    }
-                    updateUI();
-                }
-            });
-        }
-        
-        // Load user data from Firestore
-        async function loadUserData(userId) {
-            try {
-                const doc = await db.collection('users').doc(userId).get();
-                if (doc.exists) {
-                    userData = doc.data();
-                    watchedAdsCount = userData.watchedAds || 0;
-                    earnedPoints = userData.balance || 0;
-                    updateUI();
-                } else {
-                    // Create new user document
-                    await db.collection('users').doc(userId).set({
-                        name: currentUser.displayName || currentUser.email,
-                        email: currentUser.email,
-                        watchedAds: 0,
-                        balance: 0,
-                        totalWithdrawn: 0,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    
-                    userData = {
-                        watchedAds: 0,
-                        balance: 0,
-                        totalWithdrawn: 0
-                    };
-                }
-            } catch (error) {
-                console.error("Error loading user data:", error);
-                showAdNotification("Failed to load user data");
-            }
-        }
-        
-        // Update UI elements
-        function updateUI() {
-            watchedAdsEl.textContent = watchedAdsCount;
-            earnedPointsEl.textContent = earnedPoints.toFixed(2);
-            currentBalanceEl.textContent = earnedPoints.toFixed(2);
-            
-            const progress = (watchedAdsCount % ADS_FOR_BONUS) / ADS_FOR_BONUS * 100;
-            adsProgressEl.textContent = `${Math.round(progress)}%`;
-            progressFillEl.style.width = `${progress}%`;
-            
-            // Add animation when points change
-            earnedPointsEl.classList.remove('pulse');
-            void earnedPointsEl.offsetWidth; // Trigger reflow
-            earnedPointsEl.classList.add('pulse');
-        }
-        
-        // Watch ad function using Monetag
-        async function watchAd() {
-            if (!currentUser) {
-                showAdNotification("Please login to earn points");
-                return;
-            }
-            
-            // Show ad notification
-            showAdNotification("Loading ad... Please wait");
-            
-            try {
-                // Show Monetag ad
-                if (typeof show_9593694 === 'function') {
-                    await show_9593694();
-                } else {
-                    // Fallback to simulated ad
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                }
-                
-                // Ad shown successfully
-                watchedAdsCount++;
-                earnedPoints += POINTS_PER_AD;
-                
-                // Every 10 ads, give bonus points
-                if (watchedAdsCount % ADS_FOR_BONUS === 0) {
-                    earnedPoints += 1.00; // Bonus point
-                }
-                
-                // Save data
-                if (currentUser) {
-                    await db.collection('users').doc(currentUser.uid).update({
-                        watchedAds: firebase.firestore.FieldValue.increment(1),
-                        balance: firebase.firestore.FieldValue.increment(POINTS_PER_AD)
-                    });
-                    
-                    if (watchedAdsCount % ADS_FOR_BONUS === 0) {
-                        await db.collection('users').doc(currentUser.uid).update({
-                            balance: firebase.firestore.FieldValue.increment(1.00)
-                        });
-                    }
-                } else {
-                    localStorage.setItem('watchedAdsCount', watchedAdsCount);
-                    localStorage.setItem('earnedPoints', earnedPoints);
-                }
-                
-                updateUI();
-                showAdNotification("Ad completed! +0.50 points added to your account");
-            } catch (error) {
-                console.error("Ad error:", error);
-                showAdNotification("Failed to show ad. Please try again.");
-            }
-        }
-        
-        // Auto show ads
-        function startAutoAds() {
-            if (!currentUser) {
-                showAdNotification("Please login to use auto ads");
-                return;
-            }
-            
-            autoAdInterval = setInterval(watchAd, 30000); // Auto show ad every 30 seconds
-            document.getElementById('auto-ad-btn').textContent = "Auto Ads Running...";
-            showAdNotification("Auto ads started. Ads will play every 30 seconds.");
-        }
-        
-        function stopAutoAds() {
+    if (document.getElementById('stop-auto-btn')) {
+        document.getElementById('stop-auto-btn').addEventListener('click', () => {
             clearInterval(autoAdInterval);
-            document.getElementById('auto-ad-btn').textContent = "Auto Show Ads";
-            showAdNotification("Auto ads stopped.");
-        }
-        
-        // Show ad notification
-        function showAdNotification(message) {
-            adNotificationEl.textContent = message;
-            adNotificationEl.style.display = 'block';
-            
-            setTimeout(() => {
-                adNotificationEl.style.display = 'none';
-            }, 3000);
-        }
-        
-        // Auth Functions
-        function openModal(modalId) {
-            document.getElementById(modalId).style.display = 'flex';
-        }
-        
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-        
-        function switchTab(tab) {
-            if (tab === 'login') {
-                document.getElementById('login-form').style.display = 'flex';
-                document.getElementById('signup-form').style.display = 'none';
-                document.querySelectorAll('.auth-tab')[0].classList.add('active');
-                document.querySelectorAll('.auth-tab')[1].classList.remove('active');
-            } else {
-                document.getElementById('login-form').style.display = 'none';
-                document.getElementById('signup-form').style.display = 'flex';
-                document.querySelectorAll('.auth-tab')[0].classList.remove('active');
-                document.querySelectorAll('.auth-tab')[1].classList.add('active');
-            }
-        }
-        
-        async function loginUser() {
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            
-            try {
-                await auth.signInWithEmailAndPassword(email, password);
-                closeModal('auth-modal');
-                showAdNotification("Login successful!");
-            } catch (error) {
-                console.error("Login error:", error);
-                showAdNotification("Login failed: " + error.message);
-            }
-        }
-        
-        async function signupUser() {
-            const name = document.getElementById('signup-name').value;
-            const email = document.getElementById('signup-email').value;
-            const password = document.getElementById('signup-password').value;
-            
-            try {
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                await userCredential.user.updateProfile({ displayName: name });
-                
-                // Create user document in Firestore
-                await db.collection('users').doc(userCredential.user.uid).set({
-                    name: name,
-                    email: email,
-                    watchedAds: 0,
-                    balance: 0,
-                    totalWithdrawn: 0,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                closeModal('auth-modal');
-                showAdNotification("Account created successfully!");
-            } catch (error) {
-                console.error("Signup error:", error);
-                showAdNotification("Signup failed: " + error.message);
-            }
-        }
-        
-        function logoutUser() {
+            showNotification("Auto ads stopped.");
+        });
+    }
+    
+    // Withdraw button
+    if (withdrawBtnEl) {
+        withdrawBtnEl.addEventListener('click', () => {
+            document.getElementById('withdraw-modal').style.display = "flex";
+        });
+    }
+    
+    // Confirm withdraw
+    if (confirmWithdrawEl) {
+        confirmWithdrawEl.addEventListener('click', processWithdrawal);
+    }
+    
+    // Close modal
+    if (document.querySelector('.close-modal')) {
+        document.querySelector('.close-modal').addEventListener('click', () => {
+            document.getElementById('withdraw-modal').style.display = "none";
+        });
+    }
+    
+    // Logout button
+    if (logoutBtnEl) {
+        logoutBtnEl.addEventListener('click', () => {
             auth.signOut();
-            showAdNotification("Logged out successfully");
-        }
-        
-        // Withdrawal Functions
-        async function processWithdrawal() {
-            if (!currentUser) {
-                showAdNotification("Please login to withdraw");
-                return;
-            }
-            
-            const method = document.getElementById('withdraw-method').value;
-            const number = document.getElementById('withdraw-number').value;
-            let amount = parseFloat(document.getElementById('withdraw-amount').value);
-            
-            // Validation
-            if (!number || !amount) {
-                showAdNotification("Please fill all fields");
-                return;
-            }
-            
-            if (amount < MIN_WITHDRAW) {
-                showAdNotification(`Minimum withdrawal is ${MIN_WITHDRAW} points`);
-                return;
-            }
-            
-            if (amount > earnedPoints) {
-                showAdNotification("Insufficient balance");
-                return;
-            }
-            
-            // Calculate fee
-            const fee = Math.max(1, (amount * WITHDRAW_FEE_PERCENT / 100));
-            const netAmount = amount - fee;
-            
-            try {
-                // Create withdrawal record
-                await db.collection('withdrawals').add({
-                    userId: currentUser.uid,
-                    method: method,
-                    number: number,
-                    amount: amount,
-                    fee: fee,
-                    netAmount: netAmount,
-                    status: 'pending',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                // Update user balance
-                await db.collection('users').doc(currentUser.uid).update({
-                    balance: firebase.firestore.FieldValue.increment(-amount),
-                    totalWithdrawn: firebase.firestore.FieldValue.increment(amount)
-                });
-                
-                // Update local state
-                earnedPoints -= amount;
-                updateUI();
-                
-                closeModal('withdraw-modal');
-                showAdNotification(`Withdrawal request submitted! Net amount: ${netAmount.toFixed(2)} points`);
-            } catch (error) {
-                console.error("Withdrawal error:", error);
-                showAdNotification("Withdrawal failed: " + error.message);
-            }
-        }
-        
-        // Initialize app on load
-        window.onload = initApp;
-    </script>
-</body>
-</html>
+        });
+    }
+}
+
+// Initialize app when DOM is loaded
+document.addEventListener('DOMContentLoaded', initApp);
