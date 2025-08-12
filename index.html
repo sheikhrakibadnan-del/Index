@@ -1,219 +1,312 @@
-// Constants
-const POINTS_PER_AD = 0.50;
-const WITHDRAW_FEE_PERCENT = 5;
-const MIN_WITHDRAW = 10;
-
-// State variables
-let watchedAdsCount = 0;
-let earnedPoints = 0;
-let autoAdInterval;
-let currentUser = null;
-let userData = {};
-
-// DOM Elements
-const watchedAdsEl = document.getElementById('watched-ads');
-const earnedPointsEl = document.getElementById('earned-points');
-const currentBalanceEl = document.getElementById('current-balance');
-const userNameEl = document.getElementById('user-name');
-const userPhoneEl = document.getElementById('user-phone');
-const logoutBtnEl = document.getElementById('logout-btn');
-const withdrawBtnEl = document.getElementById('withdraw-btn');
-const registeredPhoneEl = document.getElementById('registered-phone');
-const withdrawAmountEl = document.getElementById('withdraw-amount');
-const confirmWithdrawEl = document.getElementById('confirm-withdraw');
-const adNotificationEl = document.getElementById('ad-notification');
-
-// Initialize the app
-function initApp() {
-    // Firebase Auth State Listener
-    auth.onAuthStateChanged(async user => {
-        if (user) {
-            currentUser = user;
-            await loadUserData(user.uid);
-            setupEventListeners();
-        } else {
-            window.location.href = "index.html";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Ad Reward</title>
+    <style>
+        /* Combined CSS for both pages */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
         }
-    });
-}
-
-// Load user data from Firestore
-async function loadUserData(userId) {
-    try {
-        const doc = await db.collection('users').doc(userId).get();
         
-        if (doc.exists) {
-            userData = doc.data();
-            watchedAdsCount = userData.watchedAds || 0;
-            earnedPoints = userData.balance || 0;
+        /* Login Page Styles */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .auth-box {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            width: 350px;
+            text-align: center;
+        }
+        .auth-tabs {
+            display: flex;
+            margin: 20px 0;
+        }
+        .auth-tab {
+            flex: 1;
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 2px solid #ddd;
+        }
+        .auth-tab.active {
+            border-bottom: 2px solid #4285f4;
+            font-weight: bold;
+        }
+        .auth-form input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .auth-btn {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        /* Home Page Styles (hidden by default) */
+        #home-page {
+            display: none;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .btn-3d {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+            box-shadow: 0 3px 0 #0d5bd8;
+        }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://libtl.com/sdk.js" data-zone="9593694" data-sdk="show_9593694"></script>
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="login-page">
+        <div class="auth-container">
+            <div class="auth-box">
+                <h1>Premium Ad Reward</h1>
+                
+                <div class="auth-tabs">
+                    <div class="auth-tab active" data-tab="login">Login</div>
+                    <div class="auth-tab" data-tab="signup">Sign Up</div>
+                </div>
+                
+                <div id="login-form" class="auth-form">
+                    <input type="text" id="login-phone" placeholder="Phone Number (01XXXXXXXXX)" required>
+                    <input type="password" id="login-password" placeholder="Password" required>
+                    <button class="auth-btn" onclick="loginUser()">Login</button>
+                </div>
+                
+                <div id="signup-form" class="auth-form" style="display: none;">
+                    <input type="text" id="signup-name" placeholder="Full Name" required>
+                    <input type="text" id="signup-phone" placeholder="Phone Number (01XXXXXXXXX)" required>
+                    <input type="password" id="signup-password" placeholder="Password (min 6 chars)" required>
+                    <button class="auth-btn" onclick="signupUser()">Create Account</button>
+                </div>
+                
+                <div class="auth-footer">
+                    <p>By continuing, you agree to our Terms & Conditions</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Home Page (Hidden by default) -->
+    <div id="home-page">
+        <div class="container">
+            <div class="header">
+                <h1>Premium Ad Reward System</h1>
+                <div class="logout-btn" id="logout-btn">Logout</div>
+            </div>
             
-            // Update UI
-            userNameEl.textContent = userData.name || "User";
-            userPhoneEl.textContent = userData.phone || "N/A";
-            registeredPhoneEl.textContent = userData.phone || "N/A";
-            updateUI();
+            <div class="content">
+                <div class="user-info">
+                    <p>Welcome, <span id="user-name">User</span></p>
+                    <p>Phone: <span id="user-phone">01XXXXXXXXX</span></p>
+                </div>
+                
+                <div class="stats">
+                    <div class="stat-card">
+                        <h3>Watched Ads</h3>
+                        <div class="value" id="watched-ads">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Earned Points</h3>
+                        <div class="value" id="earned-points">0.00</div>
+                    </div>
+                </div>
+                
+                <div class="ad-container">
+                    <div class="buttons">
+                        <button class="btn-3d" id="watch-ad-btn">Watch Ad (+0.50)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6dXx6dofu6KlQWMl0VwsVxB0hNNtTGDw",
+            authDomain: "real-cbaa6.firebaseapp.com",
+            databaseURL: "https://real-cbaa6-default-rtdb.firebaseio.com",
+            projectId: "real-cbaa6",
+            storageBucket: "real-cbaa6.firebasestorage.app",
+            messagingSenderId: "723340125605",
+            appId: "1:723340125605:web:e46b3a1f15499a1fe2b44c",
+            measurementId: "G-6FWJC1QX78"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Tab switching
+        document.querySelectorAll('.auth-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                if (tab.dataset.tab === 'login') {
+                    document.getElementById('login-form').style.display = 'block';
+                    document.getElementById('signup-form').style.display = 'none';
+                } else {
+                    document.getElementById('login-form').style.display = 'none';
+                    document.getElementById('signup-form').style.display = 'block';
+                }
+            });
+        });
+
+        // Phone validation
+        function validatePhone(phone) {
+            const regex = /^01[3-9]\d{8}$/;
+            return regex.test(phone);
         }
-    } catch (error) {
-        console.error("Error loading user data:", error);
-        showNotification("Failed to load user data");
-    }
-}
 
-// Update UI elements
-function updateUI() {
-    watchedAdsEl.textContent = watchedAdsCount;
-    earnedPointsEl.textContent = earnedPoints.toFixed(2);
-    currentBalanceEl.textContent = earnedPoints.toFixed(2);
-}
-
-// Watch ad function
-async function watchAd() {
-    if (!currentUser) return;
-    
-    showNotification("Loading ad... Please wait");
-    
-    try {
-        // Show Monetag ad
-        if (typeof show_9593694 === 'function') {
-            await show_9593694();
-        } else {
-            // Fallback to simulated ad
-            await new Promise(resolve => setTimeout(resolve, 2000));
+        // Login function
+        async function loginUser() {
+            const phone = document.getElementById('login-phone').value;
+            const password = document.getElementById('login-password').value;
+            
+            if (!validatePhone(phone)) {
+                alert("Please enter a valid Bangladeshi phone number (01XXXXXXXXX)");
+                return;
+            }
+            
+            try {
+                const email = `${phone}@premiumad.com`;
+                await auth.signInWithEmailAndPassword(email, password);
+                
+                // Switch to home page
+                document.getElementById('login-page').style.display = 'none';
+                document.getElementById('home-page').style.display = 'block';
+                
+                // Load user data
+                loadUserData();
+            } catch (error) {
+                alert("Login failed: " + error.message);
+            }
         }
-        
-        // Update points
-        earnedPoints += POINTS_PER_AD;
-        
-        // Save to Firestore
-        await db.collection('users').doc(currentUser.uid).update({
-            balance: firebase.firestore.FieldValue.increment(POINTS_PER_AD),
-            watchedAds: firebase.firestore.FieldValue.increment(1)
-        });
-        
-        // Update local data
-        watchedAdsCount++;
-        userData.balance = earnedPoints;
-        
-        updateUI();
-        showNotification("Ad completed! +0.50 points added");
-    } catch (error) {
-        console.error("Ad error:", error);
-        showNotification("Failed to show ad. Please try again.");
-    }
-}
 
-// Withdraw function
-async function processWithdrawal() {
-    const amount = parseFloat(withdrawAmountEl.value);
-    
-    if (!amount || amount < MIN_WITHDRAW) {
-        showNotification(`Minimum withdrawal is ${MIN_WITHDRAW} points`);
-        return;
-    }
-    
-    if (amount > earnedPoints) {
-        showNotification("Insufficient balance");
-        return;
-    }
-    
-    // Calculate fee
-    const fee = Math.max(1, (amount * WITHDRAW_FEE_PERCENT / 100));
-    const netAmount = amount - fee;
-    
-    try {
-        // Create withdrawal record
-        await db.collection('withdrawals').add({
-            userId: currentUser.uid,
-            userName: userData.name,
-            userPhone: userData.phone,
-            amount: amount,
-            fee: fee,
-            netAmount: netAmount,
-            method: "bkash",
-            status: "pending",
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        // Update user balance
-        await db.collection('users').doc(currentUser.uid).update({
-            balance: firebase.firestore.FieldValue.increment(-amount),
-            totalWithdrawn: firebase.firestore.FieldValue.increment(amount)
-        });
-        
-        // Update local data
-        earnedPoints -= amount;
-        userData.balance = earnedPoints;
-        updateUI();
-        
-        // Close modal and show success
-        document.getElementById('withdraw-modal').style.display = "none";
-        showNotification(`Withdrawal request submitted! Net amount: ${netAmount.toFixed(2)} points`);
-    } catch (error) {
-        console.error("Withdrawal error:", error);
-        showNotification("Withdrawal failed: " + error.message);
-    }
-}
+        // Signup function
+        async function signupUser() {
+            const name = document.getElementById('signup-name').value;
+            const phone = document.getElementById('signup-phone').value;
+            const password = document.getElementById('signup-password').value;
+            
+            if (!validatePhone(phone)) {
+                alert("Please enter a valid Bangladeshi phone number (01XXXXXXXXX)");
+                return;
+            }
+            
+            try {
+                const email = `${phone}@premiumad.com`;
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                
+                // Save user data
+                await db.collection('users').doc(userCredential.user.uid).set({
+                    name: name,
+                    phone: phone,
+                    balance: 0,
+                    watchedAds: 0
+                });
+                
+                // Switch to home page
+                document.getElementById('login-page').style.display = 'none';
+                document.getElementById('home-page').style.display = 'block';
+                
+                // Load user data
+                loadUserData();
+            } catch (error) {
+                alert("Signup failed: " + error.message);
+            }
+        }
 
-// Show notification
-function showNotification(message) {
-    if (!adNotificationEl) return;
-    
-    adNotificationEl.textContent = message;
-    adNotificationEl.style.display = 'block';
-    
-    setTimeout(() => {
-        adNotificationEl.style.display = 'none';
-    }, 3000);
-}
+        // Load user data
+        async function loadUserData() {
+            const user = auth.currentUser;
+            if (user) {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    document.getElementById('user-name').textContent = userDoc.data().name;
+                    document.getElementById('user-phone').textContent = userDoc.data().phone;
+                    document.getElementById('watched-ads').textContent = userDoc.data().watchedAds;
+                    document.getElementById('earned-points').textContent = userDoc.data().balance.toFixed(2);
+                }
+            }
+        }
 
-// Setup event listeners
-function setupEventListeners() {
-    // Watch ad button
-    if (document.getElementById('watch-ad-btn')) {
-        document.getElementById('watch-ad-btn').addEventListener('click', watchAd);
-    }
-    
-    // Auto ads buttons
-    if (document.getElementById('auto-ad-btn')) {
-        document.getElementById('auto-ad-btn').addEventListener('click', () => {
-            autoAdInterval = setInterval(watchAd, 30000);
-            showNotification("Auto ads started. Ads will play every 30 seconds.");
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            auth.signOut().then(() => {
+                document.getElementById('home-page').style.display = 'none';
+                document.getElementById('login-page').style.display = 'block';
+            });
         });
-    }
-    
-    if (document.getElementById('stop-auto-btn')) {
-        document.getElementById('stop-auto-btn').addEventListener('click', () => {
-            clearInterval(autoAdInterval);
-            showNotification("Auto ads stopped.");
-        });
-    }
-    
-    // Withdraw button
-    if (withdrawBtnEl) {
-        withdrawBtnEl.addEventListener('click', () => {
-            document.getElementById('withdraw-modal').style.display = "flex";
-        });
-    }
-    
-    // Confirm withdraw
-    if (confirmWithdrawEl) {
-        confirmWithdrawEl.addEventListener('click', processWithdrawal);
-    }
-    
-    // Close modal
-    if (document.querySelector('.close-modal')) {
-        document.querySelector('.close-modal').addEventListener('click', () => {
-            document.getElementById('withdraw-modal').style.display = "none";
-        });
-    }
-    
-    // Logout button
-    if (logoutBtnEl) {
-        logoutBtnEl.addEventListener('click', () => {
-            auth.signOut();
-        });
-    }
-}
 
-// Initialize app when DOM is loaded
-document.addEventListener('DOMContentLoaded', initApp);
+        // Watch ad button
+        document.getElementById('watch-ad-btn').addEventListener('click', async () => {
+            const user = auth.currentUser;
+            if (user) {
+                // Show ad (implementation depends on your ad SDK)
+                alert("Ad will be shown here");
+                
+                // Update user balance
+                const userRef = db.collection('users').doc(user.uid);
+                await userRef.update({
+                    watchedAds: firebase.firestore.FieldValue.increment(1),
+                    balance: firebase.firestore.FieldValue.increment(0.50)
+                });
+                
+                // Refresh data
+                loadUserData();
+            }
+        });
+    </script>
+</body>
+</html>
