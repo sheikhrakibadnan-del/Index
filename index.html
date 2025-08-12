@@ -1,419 +1,241 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium Ad Reward System</title>
-    <script src='//libtl.com/sdk.js' data-zone='9593694' data-sdk='show_9593694'></script>
-    <style>
-        :root {
-            --primary: #00c853;
-            --primary-dark: #009624;
-            --secondary: #ff6d00;
-            --secondary-dark: #e65100;
-            --blue: #4285f4;
-            --blue-dark: #3367d6;
-            --dark: #121212;
-            --darker: #0a0a0a;
-            --light: #f5f5f5;
-            --gray: #2a2a2a;
-            --card-bg: #1f1f1f;
-            --gold: #ffd700;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, var(--darker), #1a1a2e);
-            color: var(--light);
-            min-height: 100vh;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            overflow-x: hidden;
-        }
-        
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                radial-gradient(circle at 10% 20%, rgba(0, 200, 83, 0.1) 0%, transparent 20%),
-                radial-gradient(circle at 90% 80%, rgba(255, 109, 0, 0.1) 0%, transparent 20%);
-            z-index: -1;
-        }
-        
-        .container {
-            width: 100%;
-            max-width: 500px;
-            background: var(--card-bg);
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            position: relative;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        
-        .header {
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            padding: 25px 20px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .header::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(45deg, 
-                rgba(255,255,255,0.1) 0%,
-                rgba(255,255,255,0) 50%,
-                rgba(255,255,255,0.1) 100%);
-            z-index: 1;
-        }
-        
-        .header h1 {
-            font-size: 28px;
-            font-weight: 700;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            position: relative;
-            z-index: 2;
-        }
-        
-        .developer {
-            display: inline-block;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 12px;
-            margin-top: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            z-index: 2;
-            backdrop-filter: blur(5px);
-        }
-        
-        .developer:hover {
-            background: rgba(0, 0, 0, 0.5);
-            transform: translateY(-2px);
-        }
-        
-        .content {
-            padding: 25px;
-        }
-        
-        .user-info {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 20px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            position: relative;
-        }
-        
-        .user-info p {
-            margin: 5px 0;
-            font-size: 14px;
-        }
-        
-        .user-badge {
-            position: absolute;
-            top: -10px;
-            right: 15px;
-            background: var(--gold);
-            color: #000;
-            padding: 3px 10px;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        
-        .stats {
-            display: flex;
-            justify-content: space-around;
-            margin: 20px 0;
-            text-align: center;
-        }
-        
-        .stat-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            padding: 15px 10px;
-            width: 45%;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            position: relative;
-        }
-        
-        .stat-card h3 {
-            font-size: 14px;
-            margin-bottom: 5px;
-            color: #aaa;
-        }
-        
-        .stat-card .value {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--primary);
-        }
-        
-        .progress-container {
-            margin: 25px 0;
-            text-align: center;
-        }
-        
-        .progress-label {
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            font-size: 14px;
-        }
-        
-        .progress-bar {
-            height: 12px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            border-radius: 10px;
-            width: 30%;
-            transition: width 0.5s ease;
-        }
-        
-        .buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin: 25px 0;
-        }
-        
-        /* 3D Button Styles */
-        .btn-3d {
-            position: relative;
-            padding: 16px 20px;
-            border: none;
-            border-radius: 15px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            color: white;
-            text-align: center;
-            transition: all 0.2s ease;
-            transform-style: preserve-3d;
-            perspective: 500px;
-            box-shadow: 
-                0 8px 0 var(--primary-dark),
-                0 15px 20px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-            z-index: 1;
-        }
-        
-        .btn-3d::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(45deg, var(--primary), var(--secondary));
-            z-index: -1;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-3d::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, 
-                transparent, 
-                rgba(255, 255, 255, 0.2), 
-                transparent);
-            transition: all 0.5s ease;
-            z-index: -1;
-        }
-        
-        .btn-3d:hover {
-            transform: translateY(4px);
-            box-shadow: 
-                0 4px 0 var(--primary-dark),
-                0 8px 10px rgba(0, 0, 0, 0.3);
-        }
-        
-        .btn-3d:hover::after {
-            left: 100%;
-        }
-        
-        .btn-3d:active {
-            transform: translateY(8px);
-            box-shadow: 
-                0 0 0 var(--primary-dark),
-                0 2px 5px rgba(0, 0, 0, 0.3);
-        }
-        
-        .btn-secondary {
-            box-shadow: 
-                0 8px 0 var(--secondary-dark),
-                0 15px 20px rgba(0, 0, 0, 0.3);
-        }
-        
-        .btn-secondary::before {
-            background: linear-gradient(45deg, var(--secondary), #ff9100);
-        }
-        
-        .btn-blue {
-            box-shadow: 
-                0 8px 0 var(--blue-dark),
-                0 15px 20px rgba(0, 0, 0, 0.3);
-        }
-        
-        .btn-blue::before {
-            background: linear-gradient(45deg, var(--blue), #64b5f6);
-        }
-        
-        .website-section {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            padding: 20px;
-            margin-top: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            text-align: center;
-        }
-        
-        .website-section h3 {
-            color: #64b5f6;
-            margin-bottom: 15px;
-            font-size: 18px;
-        }
-        
-        .footer {
-            text-align: center;
-            padding: 15px;
-            color: #777;
-            font-size: 12px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        
-        .firebase-logo {
-            display: inline-block;
-            margin-top: 10px;
-            font-size: 10px;
-            background: rgba(255, 152, 0, 0.1);
-            padding: 4px 8px;
-            border-radius: 4px;
-            color: #ffa726;
-        }
-        
-        .ad-container {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 15px;
-            padding: 20px;
-            margin: 20px 0;
-            text-align: center;
-        }
-        
-        .ad-label {
-            font-size: 12px;
-            color: #aaa;
-            margin-bottom: 10px;
-        }
-        
-        /* Animation for ad watching */
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-        
-        .pulse {
-            animation: pulse 0.5s ease;
-        }
-        
-        .ad-notification {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 15px 30px;
-            border-radius: 10px;
-            z-index: 1000;
-            display: none;
-            font-weight: bold;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-        }
-        
-        /* Responsive design */
-        @media (max-width: 480px) {
-            .container {
-                border-radius: 15px;
-            }
-            
-            .header {
-                padding: 20px 15px;
-            }
-            
-            .content {
-                padding: 20px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premium Ad Reward System</title>
+  <script src='//libtl.com/sdk.js' data-zone='9593694' data-sdk='show_9593694'></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+  <style>
+    :root {
+        --primary: #00c853;
+        --primary-dark: #009624;
+        --secondary: #ff6d00;
+        --secondary-dark: #e65100;
+        --blue: #4285f4;
+        --blue-dark: #3367d6;
+        --dark: #121212;
+        --darker: #0a0a0a;
+        --light: #f5f5f5;
+        --gray: #2a2a2a;
+        --card-bg: #1f1f1f;
+        --gold: #ffd700;
+        --red: #ff5252;
+        --red-dark: #d32f2f;
+    }
+    
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+        background: linear-gradient(135deg, var(--darker), #1a1a2e);
+        color: var(--light);
+        min-height: 100vh;
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        overflow-x: hidden;
+    }
+    
+    /* ... (পূর্বের সকল CSS স্টাইল রাখুন) ... */
+
+    /* নতুন স্টাইল যোগ করা হলো */
+    .auth-container {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        display: none; /* প্রাথমিকভাবে লুকানো */
+    }
+
+    .withdraw-container {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 15px;
+        padding: 20px;
+        margin-top: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        display: none; /* শুধুমাত্র লগইন ইউজারদের দেখাবে */
+    }
+
+    .auth-form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .auth-form input {
+        padding: 12px;
+        border-radius: 8px;
+        border: none;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+
+    .auth-tabs {
+        display: flex;
+        margin-bottom: 15px;
+    }
+
+    .auth-tab {
+        flex: 1;
+        text-align: center;
+        padding: 10px;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+    }
+
+    .auth-tab.active {
+        border-bottom: 2px solid var(--primary);
+        font-weight: bold;
+    }
+
+    .btn-red {
+        box-shadow: 0 8px 0 var(--red-dark), 0 15px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-red::before {
+        background: linear-gradient(45deg, var(--red), #ff867f);
+    }
+
+    .logout-btn {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: rgba(255, 0, 0, 0.2);
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 12px;
+        cursor: pointer;
+        display: none;
+    }
+
+    .logout-btn:hover {
+        background: rgba(255, 0, 0, 0.3);
+    }
+
+    /* মডাল স্টাইল */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-content {
+        background: var(--card-bg);
+        padding: 30px;
+        border-radius: 15px;
+        max-width: 400px;
+        width: 90%;
+        text-align: center;
+    }
+
+    .close-modal {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        cursor: pointer;
+        font-size: 20px;
+    }
+  </style>
 </head>
 <body>
     <div class="ad-notification" id="ad-notification">Ad completed! +0.50 points added to your account</div>
     
+    <!-- Auth Modal -->
+    <div class="modal" id="auth-modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('auth-modal')">&times;</span>
+            <div class="auth-tabs">
+                <div class="auth-tab active" onclick="switchTab('login')">Login</div>
+                <div class="auth-tab" onclick="switchTab('signup')">Sign Up</div>
+            </div>
+            
+            <div id="login-form" class="auth-form">
+                <input type="email" id="login-email" placeholder="Email" required>
+                <input type="password" id="login-password" placeholder="Password" required>
+                <button class="btn-3d" onclick="loginUser()">Login</button>
+            </div>
+            
+            <div id="signup-form" class="auth-form" style="display: none;">
+                <input type="text" id="signup-name" placeholder="Full Name" required>
+                <input type="email" id="signup-email" placeholder="Email" required>
+                <input type="password" id="signup-password" placeholder="Password (min 6 chars)" required>
+                <button class="btn-3d" onclick="signupUser()">Create Account</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Withdraw Modal -->
+    <div class="modal" id="withdraw-modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('withdraw-modal')">&times;</span>
+            <h3>Withdraw Funds</h3>
+            <div class="auth-form">
+                <select id="withdraw-method" class="auth-form" style="margin-bottom: 15px; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.1); color: white; border: none;">
+                    <option value="bkash">Bkash</option>
+                    <option value="nagad">Nagad</option>
+                    <option value="rocket">Rocket</option>
+                </select>
+                <input type="text" id="withdraw-number" placeholder="Account Number" required>
+                <input type="number" id="withdraw-amount" placeholder="Amount (Minimum 10)" min="10" required>
+                <button class="btn-3d btn-red" onclick="processWithdrawal()">Withdraw</button>
+                <p style="margin-top: 10px; font-size: 12px;">Withdrawal fee: 5% (min 1 point)</p>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         <div class="header">
             <h1>Premium Ad Reward System</h1>
             <div class="developer" onclick="window.location.href='https://t.me/RKDEVELOPER22'">Developer by Sheikh Rakib adnan</div>
+            <div class="logout-btn" id="logout-btn" onclick="logoutUser()">Logout</div>
         </div>
         
         <div class="content">
+            <!-- Auth Container (শুধুমাত্র লগআউট অবস্থায় দেখাবে) -->
+            <div class="auth-container" id="auth-container">
+                <p style="text-align: center; margin-bottom: 15px;">Login or create account to withdraw your earnings</p>
+                <button class="btn-3d" style="width: 100%;" onclick="openModal('auth-modal')">Login / Sign Up</button>
+            </div>
+            
             <div class="user-info">
                 <div class="user-badge">welcome</div>
-                <p>Welcome, <span id="user-name">User123</span></p>
-                <p>User ID: <span id="user-id">#USR-7694</span></p>
+                <p>Welcome, <span id="user-name">Guest</span></p>
+                <p>User ID: <span id="user-id">#GUEST-0000</span></p>
             </div>
             
             <div class="stats">
                 <div class="stat-card">
                     <h3>Watched Ads</h3>
-                    <div class="value" id="watched-ads">18</div>
+                    <div class="value" id="watched-ads">0</div>
                 </div>
                 <div class="stat-card">
                     <h3>Earned Points</h3>
-                    <div class="value" id="earned-points">9.00</div>
+                    <div class="value" id="earned-points">0.00</div>
                 </div>
             </div>
             
             <div class="progress-container">
                 <div class="progress-label">
                     <span>Progress to Bonus</span>
-                    <span id="ads-progress">30%</span>
+                    <span id="ads-progress">0%</span>
                 </div>
                 <div class="progress-bar">
                     <div class="progress-fill" id="progress-fill"></div>
@@ -427,6 +249,13 @@
                     <button class="btn-3d btn-secondary" id="auto-ad-btn" onclick="startAutoAds()">Auto Show Ads</button>
                     <button class="btn-3d" id="stop-auto-btn" onclick="stopAutoAds()">Stop Auto Ads</button>
                 </div>
+            </div>
+            
+            <!-- Withdraw Container (শুধুমাত্র লগইন অবস্থায় দেখাবে) -->
+            <div class="withdraw-container" id="withdraw-container">
+                <h3 style="text-align: center; margin-bottom: 15px;">Withdraw Your Earnings</h3>
+                <button class="btn-3d btn-red" style="width: 100%;" onclick="openModal('withdraw-modal')">Withdraw Points</button>
+                <p style="text-align: center; margin-top: 10px; font-size: 12px;">Current balance: <span id="current-balance">0.00</span> points</p>
             </div>
             
             <div class="website-section">
@@ -443,15 +272,35 @@
     </div>
 
     <script>
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyA6dXx6dofu6KlQWMl0VwsVxB0hNNtTGDw",
+  authDomain: "real-cbaa6.firebaseapp.com",
+  databaseURL: "https://real-cbaa6-default-rtdb.firebaseio.com",
+  projectId: "real-cbaa6",
+  storageBucket: "real-cbaa6.firebasestorage.app",
+  messagingSenderId: "723340125605",
+  appId: "1:723340125605:web:e46b3a1f15499a1fe2b44c",
+  measurementId: "G-6FWJC1QX78"
+};
+
+        // Firebase Initialize
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
         // Constants
         const POINTS_PER_AD = 0.50;
         const ADS_FOR_BONUS = 10;
+        const WITHDRAW_FEE_PERCENT = 5;
+        const MIN_WITHDRAW = 10;
         
         // State variables
         let watchedAdsCount = 0;
         let earnedPoints = 0;
         let autoAdInterval;
-        let userId = null;
+        let currentUser = null;
+        let userData = {};
         
         // DOM Elements
         const watchedAdsEl = document.getElementById('watched-ads');
@@ -459,32 +308,86 @@
         const adsProgressEl = document.getElementById('ads-progress');
         const progressFillEl = document.getElementById('progress-fill');
         const adNotificationEl = document.getElementById('ad-notification');
-        
+        const authContainerEl = document.getElementById('auth-container');
+        const withdrawContainerEl = document.getElementById('withdraw-container');
+        const logoutBtnEl = document.getElementById('logout-btn');
+        const currentBalanceEl = document.getElementById('current-balance');
+        const userNameEl = document.getElementById('user-name');
+        const userIdEl = document.getElementById('user-id');
+
         // Initialize the app
         function initApp() {
-            // Load user data
-            if (localStorage.getItem('watchedAdsCount')) {
-                watchedAdsCount = parseInt(localStorage.getItem('watchedAdsCount'));
-                earnedPoints = parseFloat(localStorage.getItem('earnedPoints'));
+            // Firebase Auth State Listener
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    // User is signed in
+                    currentUser = user;
+                    loadUserData(user.uid);
+                    
+                    // Update UI for logged in user
+                    authContainerEl.style.display = 'none';
+                    withdrawContainerEl.style.display = 'block';
+                    logoutBtnEl.style.display = 'block';
+                    userNameEl.textContent = user.displayName || user.email.split('@')[0];
+                    userIdEl.textContent = `#${user.uid.substring(0, 8).toUpperCase()}`;
+                } else {
+                    // User is signed out
+                    currentUser = null;
+                    
+                    // Update UI for guest
+                    authContainerEl.style.display = 'block';
+                    withdrawContainerEl.style.display = 'none';
+                    logoutBtnEl.style.display = 'none';
+                    userNameEl.textContent = 'Guest';
+                    userIdEl.textContent = '#GUEST-0000';
+                    
+                    // Load guest data from localStorage
+                    if (localStorage.getItem('watchedAdsCount')) {
+                        watchedAdsCount = parseInt(localStorage.getItem('watchedAdsCount'));
+                        earnedPoints = parseFloat(localStorage.getItem('earnedPoints'));
+                    }
+                    updateUI();
+                }
+            });
+        }
+        
+        // Load user data from Firestore
+        async function loadUserData(userId) {
+            try {
+                const doc = await db.collection('users').doc(userId).get();
+                if (doc.exists) {
+                    userData = doc.data();
+                    watchedAdsCount = userData.watchedAds || 0;
+                    earnedPoints = userData.balance || 0;
+                    updateUI();
+                } else {
+                    // Create new user document
+                    await db.collection('users').doc(userId).set({
+                        name: currentUser.displayName || currentUser.email,
+                        email: currentUser.email,
+                        watchedAds: 0,
+                        balance: 0,
+                        totalWithdrawn: 0,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    userData = {
+                        watchedAds: 0,
+                        balance: 0,
+                        totalWithdrawn: 0
+                    };
+                }
+            } catch (error) {
+                console.error("Error loading user data:", error);
+                showAdNotification("Failed to load user data");
             }
-            
-            // Generate user ID if not exists
-            if (!localStorage.getItem('userId')) {
-                const newUserId = 'USR-' + Math.floor(10000 + Math.random() * 90000);
-                localStorage.setItem('userId', newUserId);
-            }
-            
-            userId = localStorage.getItem('userId');
-            document.getElementById('user-id').textContent = `#${userId}`;
-            document.getElementById('user-name').textContent = `User${Math.floor(1000 + Math.random() * 9000)}`;
-            
-            updateUI();
         }
         
         // Update UI elements
         function updateUI() {
             watchedAdsEl.textContent = watchedAdsCount;
             earnedPointsEl.textContent = earnedPoints.toFixed(2);
+            currentBalanceEl.textContent = earnedPoints.toFixed(2);
             
             const progress = (watchedAdsCount % ADS_FOR_BONUS) / ADS_FOR_BONUS * 100;
             adsProgressEl.textContent = `${Math.round(progress)}%`;
@@ -497,59 +400,65 @@
         }
         
         // Watch ad function using Monetag
-        function watchAd() {
+        async function watchAd() {
+            if (!currentUser) {
+                showAdNotification("Please login to earn points");
+                return;
+            }
+            
             // Show ad notification
             showAdNotification("Loading ad... Please wait");
             
-            // Show Monetag ad
-            if (typeof show_9593694 === 'function') {
-                show_9593694().then(() => {
-                    // Ad shown successfully
-                    watchedAdsCount++;
-                    earnedPoints += POINTS_PER_AD;
+            try {
+                // Show Monetag ad
+                if (typeof show_9593694 === 'function') {
+                    await show_9593694();
+                } else {
+                    // Fallback to simulated ad
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                }
+                
+                // Ad shown successfully
+                watchedAdsCount++;
+                earnedPoints += POINTS_PER_AD;
+                
+                // Every 10 ads, give bonus points
+                if (watchedAdsCount % ADS_FOR_BONUS === 0) {
+                    earnedPoints += 1.00; // Bonus point
+                }
+                
+                // Save data
+                if (currentUser) {
+                    await db.collection('users').doc(currentUser.uid).update({
+                        watchedAds: firebase.firestore.FieldValue.increment(1),
+                        balance: firebase.firestore.FieldValue.increment(POINTS_PER_AD)
+                    });
                     
-                    // Every 10 ads, give bonus points
                     if (watchedAdsCount % ADS_FOR_BONUS === 0) {
-                        earnedPoints += 1.00; // Bonus point
+                        await db.collection('users').doc(currentUser.uid).update({
+                            balance: firebase.firestore.FieldValue.increment(1.00)
+                        });
                     }
-                    
-                    // Save data
+                } else {
                     localStorage.setItem('watchedAdsCount', watchedAdsCount);
                     localStorage.setItem('earnedPoints', earnedPoints);
-                    
-                    updateUI();
-                    
-                    // Show success notification
-                    showAdNotification("Ad completed! +0.50 points added to your account");
-                }).catch(error => {
-                    console.error("Ad error:", error);
-                    showAdNotification("Failed to show ad. Please try again.");
-                });
-            } else {
-                // Fallback to simulated ad
-                setTimeout(() => {
-                    watchedAdsCount++;
-                    earnedPoints += POINTS_PER_AD;
-                    
-                    // Every 10 ads, give bonus points
-                    if (watchedAdsCount % ADS_FOR_BONUS === 0) {
-                        earnedPoints += 1.00; // Bonus point
-                    }
-                    
-                    // Save data
-                    localStorage.setItem('watchedAdsCount', watchedAdsCount);
-                    localStorage.setItem('earnedPoints', earnedPoints);
-                    
-                    updateUI();
-                    
-                    // Show success notification
-                    showAdNotification("Ad completed! +0.50 points added to your account");
-                }, 2000);
+                }
+                
+                updateUI();
+                showAdNotification("Ad completed! +0.50 points added to your account");
+            } catch (error) {
+                console.error("Ad error:", error);
+                showAdNotification("Failed to show ad. Please try again.");
             }
         }
         
         // Auto show ads
         function startAutoAds() {
+            if (!currentUser) {
+                showAdNotification("Please login to use auto ads");
+                return;
+            }
+            
             autoAdInterval = setInterval(watchAd, 30000); // Auto show ad every 30 seconds
             document.getElementById('auto-ad-btn').textContent = "Auto Ads Running...";
             showAdNotification("Auto ads started. Ads will play every 30 seconds.");
@@ -569,6 +478,137 @@
             setTimeout(() => {
                 adNotificationEl.style.display = 'none';
             }, 3000);
+        }
+        
+        // Auth Functions
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        function switchTab(tab) {
+            if (tab === 'login') {
+                document.getElementById('login-form').style.display = 'flex';
+                document.getElementById('signup-form').style.display = 'none';
+                document.querySelectorAll('.auth-tab')[0].classList.add('active');
+                document.querySelectorAll('.auth-tab')[1].classList.remove('active');
+            } else {
+                document.getElementById('login-form').style.display = 'none';
+                document.getElementById('signup-form').style.display = 'flex';
+                document.querySelectorAll('.auth-tab')[0].classList.remove('active');
+                document.querySelectorAll('.auth-tab')[1].classList.add('active');
+            }
+        }
+        
+        async function loginUser() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                closeModal('auth-modal');
+                showAdNotification("Login successful!");
+            } catch (error) {
+                console.error("Login error:", error);
+                showAdNotification("Login failed: " + error.message);
+            }
+        }
+        
+        async function signupUser() {
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                await userCredential.user.updateProfile({ displayName: name });
+                
+                // Create user document in Firestore
+                await db.collection('users').doc(userCredential.user.uid).set({
+                    name: name,
+                    email: email,
+                    watchedAds: 0,
+                    balance: 0,
+                    totalWithdrawn: 0,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                closeModal('auth-modal');
+                showAdNotification("Account created successfully!");
+            } catch (error) {
+                console.error("Signup error:", error);
+                showAdNotification("Signup failed: " + error.message);
+            }
+        }
+        
+        function logoutUser() {
+            auth.signOut();
+            showAdNotification("Logged out successfully");
+        }
+        
+        // Withdrawal Functions
+        async function processWithdrawal() {
+            if (!currentUser) {
+                showAdNotification("Please login to withdraw");
+                return;
+            }
+            
+            const method = document.getElementById('withdraw-method').value;
+            const number = document.getElementById('withdraw-number').value;
+            let amount = parseFloat(document.getElementById('withdraw-amount').value);
+            
+            // Validation
+            if (!number || !amount) {
+                showAdNotification("Please fill all fields");
+                return;
+            }
+            
+            if (amount < MIN_WITHDRAW) {
+                showAdNotification(`Minimum withdrawal is ${MIN_WITHDRAW} points`);
+                return;
+            }
+            
+            if (amount > earnedPoints) {
+                showAdNotification("Insufficient balance");
+                return;
+            }
+            
+            // Calculate fee
+            const fee = Math.max(1, (amount * WITHDRAW_FEE_PERCENT / 100));
+            const netAmount = amount - fee;
+            
+            try {
+                // Create withdrawal record
+                await db.collection('withdrawals').add({
+                    userId: currentUser.uid,
+                    method: method,
+                    number: number,
+                    amount: amount,
+                    fee: fee,
+                    netAmount: netAmount,
+                    status: 'pending',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Update user balance
+                await db.collection('users').doc(currentUser.uid).update({
+                    balance: firebase.firestore.FieldValue.increment(-amount),
+                    totalWithdrawn: firebase.firestore.FieldValue.increment(amount)
+                });
+                
+                // Update local state
+                earnedPoints -= amount;
+                updateUI();
+                
+                closeModal('withdraw-modal');
+                showAdNotification(`Withdrawal request submitted! Net amount: ${netAmount.toFixed(2)} points`);
+            } catch (error) {
+                console.error("Withdrawal error:", error);
+                showAdNotification("Withdrawal failed: " + error.message);
+            }
         }
         
         // Initialize app on load
